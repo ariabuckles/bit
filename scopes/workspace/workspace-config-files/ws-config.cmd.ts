@@ -3,10 +3,7 @@
 import { omit } from 'lodash';
 import { Command, CommandOptions } from '@teambit/cli';
 import chalk from 'chalk';
-import {
-  WorkspaceConfigFilesMain,
-  WriteConfigFilesResult
-} from './workspace-config-files.main.runtime';
+import { WorkspaceConfigFilesMain, WriteConfigFilesResult } from './workspace-config-files.main.runtime';
 import { formatCleanOutput, formatListOutput, formatWriteOutput } from './format-outputs';
 
 export type CleanConfigCmdFlags = {
@@ -52,7 +49,11 @@ export class WsConfigWriteCmd implements Command {
       'clean',
       'delete existing config files from the workspace. highly recommended to run it with "--dry-run" first',
     ],
-    ['w', 'writers <writers>', `only write config files for the given writers. use comma to separate multiple writers. use ${COMMAND_NAME} list to see all writers`],
+    [
+      'w',
+      'writers <writers>',
+      `only write config files for the given writers. use comma to separate multiple writers. use ${COMMAND_NAME} list to see all writers`,
+    ],
     ['s', 'silent', 'do not prompt for confirmation'],
     ['', 'no-dedupe', "write configs inside each one of the component's dir, avoid deduping"],
     ['', 'dry-run', 'show the paths that configs will be written per env'],
@@ -76,14 +77,13 @@ export class WsConfigWriteCmd implements Command {
 
   async json(_args, flags: WriteConfigCmdFlags) {
     const { clean, silent, noDedupe, dryRunWithContent, writers } = flags;
-    const dryRun = dryRunWithContent ? true : flags.dryRun;
+    const dryRun = dryRunWithContent ? true : !!flags.dryRun;
     const { cleanResults, writeResults, wsDir } = await this.workspaceConfigFilesMain.writeConfigFiles({
       clean,
       dedupe: !noDedupe,
       dryRun,
-      dryRunWithContent,
       silent,
-      writers: writers?.split(',')
+      writers: writers?.split(','),
     });
 
     if (dryRun) {
@@ -108,7 +108,11 @@ export class WsConfigCleanCmd implements Command {
   group = 'development';
   options = [
     ['s', 'silent', 'do not prompt for confirmation'],
-    ['w', 'writers <writers>', `only write config files for the given writers. use comma to separate multiple writers. use ${COMMAND_NAME} list to see all writers`],
+    [
+      'w',
+      'writers <writers>',
+      `only write config files for the given writers. use comma to separate multiple writers. use ${COMMAND_NAME} list to see all writers`,
+    ],
     ['', 'dry-run', 'show the paths that configs will be written per env'],
     ['j', 'json', 'json format'],
   ] as CommandOptions;
@@ -136,9 +140,7 @@ export class WsConfigListCmd implements Command {
   description = 'EXPERIMENTAL. list config writers';
   alias = '';
   group = 'development';
-  options = [
-    ['j', 'json', 'json format'],
-  ] as CommandOptions;
+  options = [['j', 'json', 'json format']] as CommandOptions;
 
   constructor(private workspaceConfigFilesMain: WorkspaceConfigFilesMain) {}
 

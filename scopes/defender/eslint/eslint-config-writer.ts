@@ -1,9 +1,17 @@
 import { sha1 } from '@teambit/legacy/dist/utils';
 import fs from 'fs-extra';
 import { ExecutionContext } from '@teambit/envs';
-import type { ConfigWriterEntry, EnvMapValue, WrittenConfigFile, ExtendingConfigFile, ConfigFile } from '@teambit/workspace-config-files';
-import { expandIncludeExclude } from '@teambit/typescript';
+import type {
+  ConfigWriterEntry,
+  EnvMapValue,
+  WrittenConfigFile,
+  ExtendingConfigFile,
+  ConfigFile,
+  GenerateExtendingConfigFilesArgs,
+} from '@teambit/workspace-config-files';
+import { GLOBAL_TYPES_DIR, expandIncludeExclude } from '@teambit/typescript';
 import { set } from 'lodash';
+import { Logger } from '@teambit/logger';
 import { LinterMain } from '@teambit/linter';
 import { EslintLinterInterface } from './eslint-linter-interface';
 
@@ -13,7 +21,7 @@ export class EslintConfigWriter implements ConfigWriterEntry {
   name = 'EslintConfigWriter';
   cliName = 'eslint';
 
-  constructor(private linter: LinterMain) {}
+  constructor(private linter: LinterMain, private logger: Logger) {}
   patterns: string[] = ['**/.eslintrc.json'];
 
   calcConfigFiles(executionContext: ExecutionContext): ConfigFile[] | undefined {
@@ -50,22 +58,31 @@ export class EslintConfigWriter implements ConfigWriterEntry {
     const tsConfigFile = writtenConfigFiles.find((file) => file.name.includes('tsconfig.bit.eslint'));
     if (!tsConfigFile) return Promise.resolve();
     const tsConfigPath = tsConfigFile.filePath;
+    const exists = await fs.pathExists(tsConfigPath);
+    if (!exists) {
+      this.logger.warn(
+        `EslintConfigWriter, tsconfig file ${tsConfigPath} was not found for post process. if it is part of --dry-run, it is ok.`
+      );
+      return Promise.resolve();
+    }
     const tsConfig = await fs.readJson(tsConfigPath);
     const compDirs: string[] = envMapValue.paths;
-    const newTsConfig = expandIncludeExclude(tsConfigPath, tsConfig, compDirs);
+    const newTsConfig = expandIncludeExclude(tsConfigPath, tsConfig, compDirs, GLOBAL_TYPES_DIR);
 
     fs.outputJSONSync(tsConfigPath, newTsConfig, { spaces: 2 });
     return Promise.resolve();
   }
 
-  generateExtendingFile(writtenConfigFiles: WrittenConfigFile[]): ExtendingConfigFile | undefined {
+  generateExtendingFile(args: GenerateExtendingConfigFilesArgs): ExtendingConfigFile | undefined {
+    const { writtenConfigFiles } = args;
     const eslintConfigFile = writtenConfigFiles.find((file) => file.name.includes('.eslintrc.bit'));
     if (!eslintConfigFile) return undefined;
     const config = {
-      extends: [eslintConfigFile.filePath],
+      // Using DSL to make sure it will be replaced with relative path
+      extends: [`{${eslintConfigFile.name}}`],
     };
     const content = `${BIT_GENERATED_ESLINT_CONFIG_COMMENT}\n${JSON.stringify(config, null, 2)}`;
-    return { content, name: '.eslintrc.json', extendingTarget: eslintConfigFile.filePath};
+    return { content, name: '.eslintrc.json', extendingTarget: eslintConfigFile, useAbsPaths: false };
   }
 
   isBitGenerated(filePath: string): boolean {

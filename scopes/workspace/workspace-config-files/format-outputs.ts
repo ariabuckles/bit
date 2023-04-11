@@ -17,14 +17,10 @@ export function formatListOutput(result: ConfigWritersList): string {
   const head = ['Aspect ID', 'name', 'CLI name'];
 
   const rows = result.map((entry) => {
-    return [
-      entry.aspectId,
-      entry.configWriter.name,
-      entry.configWriter.cliName,
-    ]
+    return [entry.aspectId, entry.configWriter.name, entry.configWriter.cliName];
   });
   const table = new Table({ head, style: { head: ['cyan'] } });
-  table.push(...rows)
+  table.push(...rows);
   return table.toString();
 }
 export function formatWriteOutput(writeConfigFilesResult: WriteConfigFilesResult, flags: WriteConfigCmdFlags): string {
@@ -111,7 +107,7 @@ function getEnvGroupExtendingConfigFilesOutput(
   )}`;
   const extendingConfigFile = envsWrittenExtendingConfigFile.extendingConfigFile;
   const paths = extendingConfigFile.filePaths
-    .map((p) => `  ${relative(wsDir, p)} --> ${relative(wsDir, extendingConfigFile.extendingTarget)}`)
+    .map((p) => `  ${relative(wsDir, p)} --> ${relative(wsDir, extendingConfigFile.extendingTarget.filePath)}`)
     .join('\n    ');
   return `${title}\n    ${paths}`;
 }

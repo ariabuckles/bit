@@ -276,13 +276,11 @@ export default class ComponentsList {
       const componentsFromFs = await this.getComponentsFromFS(loadOpts);
       const componentsFromModel = await this.getModelComponents();
       const duringMergeComps = this.listDuringMergeStateComponents();
-      const updatesFromMain = await this.listUpdatesFromMainPending();
       this._mergePendingComponents = (
         await Promise.all(
           componentsFromFs.map(async (component: Component) => {
             const modelComponent = componentsFromModel.find((c) => c.toBitId().isEqualWithoutVersion(component.id));
             if (!modelComponent || duringMergeComps.hasWithoutScopeAndVersion(component.id)) return null;
-            if (updatesFromMain.find((item) => item.id.isEqualWithoutVersion(component.id))) return null;
             await modelComponent.setDivergeData(this.scope.objects);
             const divergedData = modelComponent.getDivergeData();
             if (!modelComponent.getDivergeData().isDiverged()) return null;
@@ -495,7 +493,8 @@ export default class ComponentsList {
    */
   async listRemotelySoftRemoved(): Promise<Component[]> {
     const fromFs = await this.getFromFileSystem();
-    return fromFs.filter((comp) => comp.componentFromModel?.removed);
+
+    return fromFs.filter((comp) => comp.isRemoved());
   }
 
   /**
