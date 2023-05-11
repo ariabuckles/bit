@@ -176,7 +176,7 @@ export class StatusCmd implements Command {
 
     const pendingMergeTitle = chalk.underline.white('pending merge');
     const pendingMergeDesc = `(use "bit reset" to add local changes on top of the remote and discard local tags.
-alternatively, to keep local tags/snaps history, use "bit merge <remote-name>/<lane-name> [component-id]")\n`;
+alternatively, to keep local tags/snaps history, use "bit merge <component-ids...>")\n`;
     const pendingMergeComps = mergePendingComponents
       .map((component) => {
         return `    > ${chalk.cyan(component.id.toString())} local and remote have diverged and have ${
